@@ -1,6 +1,6 @@
 {
   "name": "openarva",
-  "version": "17.6.10",
+  "version": "17.6.11",
   "description": "Enterprise Autonomous Multi-Model AI Agent Gateway Engine",
   "license": "MIT",
   "main": "dist/index.js",
