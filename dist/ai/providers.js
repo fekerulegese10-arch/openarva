@@ -1,9 +1,7 @@
 // The package is available at runtime, but its type declarations may not be
 // discoverable in projects that use a non-standard module resolution setup.
-// @ts-expect-error -- @ai-sdk/openai provides the runtime provider factory.
 import { createOpenAI as createOpenAIProvider } from '@ai-sdk/openai';
 const createOpenAI = (options) => createOpenAIProvider({
-    name: options.name || 'openai',
     baseURL: options.baseURL || 'https://api.openai.com/v1',
     apiKey: options.apiKey,
 });

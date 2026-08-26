@@ -1,8 +1,6 @@
 // These providers are optional peer dependencies in deployments that only use
 // the local engine. Keep the router type-checkable in those deployments.
-// @ts-expect-error Optional dependency; install @ai-sdk/openai to enable it.
 import { createOpenAI } from '@ai-sdk/openai';
-// @ts-expect-error Optional dependency; install @ai-sdk/anthropic to enable it.
 import { createAnthropic } from '@ai-sdk/anthropic';
 // Local AI Endpoint (Ollama / LM Studio)
 const localEngine = createOpenAI({

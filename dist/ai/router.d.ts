@@ -1,11 +1,14 @@
-export declare const OpenArvaRouter: {
-    gemini: any;
-    openai: any;
-    anthropic: any;
-    groq: any;
-    grok: any;
-    kimi: any;
-    mistral: any;
-    local: (modelName: string) => any;
-    selectModel(taskType: string): any;
-};
+type ModelFactory = (modelName: string) => any;
+interface OpenArvaRouterType {
+    gemini: ModelFactory;
+    openai: ModelFactory;
+    anthropic: ModelFactory;
+    groq: ModelFactory;
+    grok: ModelFactory;
+    kimi: ModelFactory;
+    mistral: ModelFactory;
+    local: ModelFactory;
+    selectModel: (taskType: string) => any;
+}
+export declare const OpenArvaRouter: OpenArvaRouterType;
+export {};

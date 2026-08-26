@@ -1,11 +1,10 @@
 // The package is available at runtime, but its type declarations may not be
 // discoverable in projects that use a non-standard module resolution setup.
-// @ts-expect-error -- @ai-sdk/openai provides the runtime provider factory.
 import { createOpenAI as createOpenAIProvider } from '@ai-sdk/openai';
+import type { LanguageModel } from 'ai';
 
 const createOpenAI = (options: { baseURL?: string; apiKey?: string; name?: string }) =>
   createOpenAIProvider({
-    name: options.name || 'openai',
     baseURL: options.baseURL || 'https://api.openai.com/v1',
     apiKey: options.apiKey,
   });
@@ -17,7 +16,7 @@ const createGemini = () =>
     apiKey: process.env.GEMINI_API_KEY,
   });
 
-export function getModelProvider(providerName: string, modelName: string) {
+export function getModelProvider(providerName: string, modelName: string): LanguageModel {
   const env = process.env;
 
   switch (providerName.toLowerCase()) {

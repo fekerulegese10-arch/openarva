@@ -1,5 +1,4 @@
 import { createServer } from 'http';
-// @ts-expect-error ws does not provide declarations in this project.
 import { WebSocketServer } from 'ws';
 export function startWebGateway(config = {}) {
     const PORT = config.port || 3000;

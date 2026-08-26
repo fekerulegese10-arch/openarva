@@ -1,8 +1,6 @@
 // These providers are optional peer dependencies in deployments that only use
 // the local engine. Keep the router type-checkable in those deployments.
-// @ts-expect-error Optional dependency; install @ai-sdk/openai to enable it.
 import { createOpenAI } from '@ai-sdk/openai';
-// @ts-expect-error Optional dependency; install @ai-sdk/anthropic to enable it.
 import { createAnthropic } from '@ai-sdk/anthropic';
 
 // Local AI Endpoint (Ollama / LM Studio)
@@ -11,7 +9,20 @@ const localEngine = createOpenAI({
   apiKey: 'local-key',
 });
 
-export const OpenArvaRouter = {
+type ModelFactory = (modelName: string) => any;
+interface OpenArvaRouterType {
+  gemini: ModelFactory;
+  openai: ModelFactory;
+  anthropic: ModelFactory;
+  groq: ModelFactory;
+  grok: ModelFactory;
+  kimi: ModelFactory;
+  mistral: ModelFactory;
+  local: ModelFactory;
+  selectModel: (taskType: string) => any;
+}
+
+export const OpenArvaRouter: OpenArvaRouterType = {
   // Cloud Providers
   // Use Google's OpenAI-compatible endpoint to avoid requiring @ai-sdk/google.
   gemini: createOpenAI({

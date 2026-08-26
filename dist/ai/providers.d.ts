@@ -1,1 +1,2 @@
-export declare function getModelProvider(providerName: string, modelName: string): any;
+import type { LanguageModel } from 'ai';
+export declare function getModelProvider(providerName: string, modelName: string): LanguageModel;

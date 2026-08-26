@@ -1,5 +1,4 @@
 import { createServer, IncomingMessage, ServerResponse } from 'http';
-// @ts-expect-error ws does not provide declarations in this project.
 import { WebSocketServer, WebSocket } from 'ws';
 
 export interface WebGatewayConfig {

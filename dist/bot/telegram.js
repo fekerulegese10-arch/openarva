@@ -1,20 +1,46 @@
-import { Telegraf } from 'telegraf';
 import { askOpenArva } from '../ai/llm.js';
 import { executeCommand } from '../engine/executor.js';
 export function startBot() {
     const token = process.env.TELEGRAM_BOT_TOKEN;
     if (!token)
         return;
-    const bot = new Telegraf(token);
-    bot.on('text', async (ctx) => {
-        const userMsg = ctx.message.text;
-        if (userMsg.startsWith('/cmd ')) {
-            const command = userMsg.replace('/cmd ', '');
-            const output = await executeCommand(command);
-            return ctx.reply(`[OS Output]:\n${output}`);
+    const api = `https://api.telegram.org/bot${token}`;
+    let offset = 0;
+    const poll = async () => {
+        const response = await fetch(`${api}/getUpdates?timeout=30&offset=${offset}`);
+        const data = await response.json();
+        if (!data.ok)
+            return;
+        for (const update of data.result) {
+            offset = update.update_id + 1;
+            const message = update.message;
+            if (!message?.text)
+                continue;
+            const userMsg = message.text;
+            let reply;
+            if (userMsg.startsWith('/cmd ')) {
+                const command = userMsg.replace('/cmd ', '');
+                const output = await executeCommand(command);
+                reply = `[OS Output]:\n${output}`;
+            }
+            else {
+                reply = await askOpenArva(userMsg);
+            }
+            await fetch(`${api}/sendMessage`, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ chat_id: message.chat.id, text: reply }),
+            });
         }
-        const aiResponse = await askOpenArva(userMsg);
-        ctx.reply(aiResponse);
-    });
-    bot.launch();
+    };
+    void (async () => {
+        while (true) {
+            try {
+                await poll();
+            }
+            catch {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+        }
+    })();
 }
