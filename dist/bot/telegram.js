@@ -1,46 +1,54 @@
-import { askOpenArva } from '../ai/llm.js';
-import { executeCommand } from '../engine/executor.js';
 export function startBot() {
     const token = process.env.TELEGRAM_BOT_TOKEN;
-    if (!token)
+    if (!token) {
+        console.log('[Telegram] No token provided, skipping Telegram bot.');
         return;
+    }
     const api = `https://api.telegram.org/bot${token}`;
     let offset = 0;
+    console.log('[Telegram] Starting Telegram bot polling loop...');
+    // ቋሚ Polling Loop እንዲኖር while (true) እንጠቀማለን
     const poll = async () => {
-        const response = await fetch(`${api}/getUpdates?timeout=30&offset=${offset}`);
-        const data = await response.json();
-        if (!data.ok)
-            return;
-        for (const update of data.result) {
-            offset = update.update_id + 1;
-            const message = update.message;
-            if (!message?.text)
-                continue;
-            const userMsg = message.text;
-            let reply;
-            if (userMsg.startsWith('/cmd ')) {
-                const command = userMsg.replace('/cmd ', '');
-                const output = await executeCommand(command);
-                reply = `[OS Output]:\n${output}`;
-            }
-            else {
-                reply = await askOpenArva(userMsg);
-            }
-            await fetch(`${api}/sendMessage`, {
-                method: 'POST',
-                headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ chat_id: message.chat.id, text: reply }),
-            });
-        }
-    };
-    void (async () => {
         while (true) {
             try {
-                await poll();
+                const response = await fetch(`${api}/getUpdates?timeout=30&offset=${offset}`);
+                const data = await response.json();
+                if (data.ok && data.result) {
+                    for (const update of data.result) {
+                        offset = update.update_id + 1;
+                        const message = update.message;
+                        if (!message?.text)
+                            continue;
+                        console.log(`[Telegram] New message from ${message.chat.id}: ${message.text}`);
+                        const userMsg = message.text;
+                        let reply;
+                        if (userMsg.startsWith('/cmd ')) {
+                            const command = userMsg.replace('/cmd ', '');
+                            const output = await executeCommand(command);
+                            reply = `\`\`\`\n${output}\n\`\`\``;
+                        }
+                        else {
+                            reply = await askOpenArva(userMsg);
+                        }
+                        // ለተጠቃሚው በቴሌግራም ምላሽ መላክ
+                        await fetch(`${api}/sendMessage`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                chat_id: message.chat.id,
+                                text: reply,
+                            }),
+                        });
+                    }
+                }
             }
-            catch {
-                await new Promise((resolve) => setTimeout(resolve, 1000));
+            catch (err) {
+                console.error('[Telegram] Polling error:', err);
+                // Error ቢፈጠር እንኳን ትንሽ ቆይቶ እንዲቀጥል
+                await new Promise((res) => setTimeout(res, 3000));
             }
         }
-    })();
+    };
+    // function-ኡን እዚህ ጋር እንጠራዋለን!
+    poll();
 }
