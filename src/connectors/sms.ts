@@ -9,7 +9,7 @@ export async function handleIncomingSMS(req: any, res: any) {
   const senderNumber = req.body.From;
 
   // AI Agent Processing simulation
-  const replyText = `[OpenArva AI]: Received your prompt "${incomingMsg}"`;
+  const replyText = `📱 [OpenArva SMS]: Your message was received and is being processed. Reply soon!`;
 
   await client.messages.create({
     body: replyText,

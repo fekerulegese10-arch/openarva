@@ -1,7 +1,7 @@
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 export function startWebGateway(config = {}) {
-    const PORT = config.port || 3000;
+    const PORT = config.port || Number(process.env.OPENARVA_PORT || 3000);
     const AUTH_SECRET = config.authSecret || process.env.OPENARVA_AUTH_KEY;
     // 1. የደህንነት ማረጋገጫ (Authentication Middleware)
     const authenticateRequest = (req, res) => {
@@ -38,7 +38,7 @@ export function startWebGateway(config = {}) {
                     return;
                 }
                 // እዚህ ጋር የ OpenArva Core ኤጀንት ጥያቄውን ያስናግዳል
-                const agentResponse = `[OpenArva Core Agent]: Processed "${prompt}" ${domain ? `in ${domain} domain` : ''}`;
+                const agentResponse = `🤖 [OpenArva Core]: Processing "${prompt}" ${domain ? `in ${domain} domain` : ''}`;
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: true, timestamp: new Date().toISOString(), data: agentResponse }));
             }
@@ -48,29 +48,30 @@ export function startWebGateway(config = {}) {
             }
         });
     });
-    // 3. HTTP Server ማስነሳት
+    // HTTP Server Start
     server.listen(PORT, () => {
-        console.log(`[OpenArva Security System] Secure Web Gateway running on port ${PORT}`);
+        console.log(`🔐 [OpenArva Security] Secure gateway active on port ${PORT}`);
+        console.log(`📡 WebSocket: ws://127.0.0.1:${PORT}`);
     });
-    // 4. Real-time WebSocket Gateway (ለ አሁናዊ ቻት)
+    // Real-time WebSocket Gateway
     const wss = new WebSocketServer({ server });
     wss.on('connection', (ws) => {
-        console.log('[OpenArva WS] አዲስ የ WebSocket ግንኙነት ተመስርቷል።');
+        console.log('🔗 [OpenArva WebSocket] New connection established');
         ws.on('message', (message) => {
             try {
                 const payload = JSON.parse(message.toString());
-                // WebSocket Token Check
+                // Security: Token verification
                 if (AUTH_SECRET && payload.token !== AUTH_SECRET) {
-                    ws.send(JSON.stringify({ error: 'Unauthorized WebSocket Connection' }));
+                    ws.send(JSON.stringify({ error: '🔒 Unauthorized access denied' }));
                     return ws.close();
                 }
                 ws.send(JSON.stringify({
-                    status: 'success',
-                    response: `[OpenArva WS Agent]: Response to "${payload.prompt || message}"`
+                    status: '✅ success',
+                    response: `🤖 [OpenArva AI]: Processing "${payload.prompt || message}"...`
                 }));
             }
             catch (err) {
-                ws.send(JSON.stringify({ error: 'Invalid message format' }));
+                ws.send(JSON.stringify({ error: '❌ Invalid message format' }));
             }
         });
     });

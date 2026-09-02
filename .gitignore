@@ -3,3 +3,6 @@ dist/
 .env
 .env.*
 *.log
+.wwebjs_auth/
+.wwebjs_cache/
+.openarva/

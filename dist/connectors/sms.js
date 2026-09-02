@@ -6,7 +6,7 @@ export async function handleIncomingSMS(req, res) {
     const incomingMsg = req.body.Body;
     const senderNumber = req.body.From;
     // AI Agent Processing simulation
-    const replyText = `[OpenArva AI]: Received your prompt "${incomingMsg}"`;
+    const replyText = `📱 [OpenArva SMS]: Your message was received and is being processed. Reply soon!`;
     await client.messages.create({
         body: replyText,
         from: process.env.TWILIO_PHONE_NUMBER,

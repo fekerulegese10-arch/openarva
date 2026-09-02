@@ -19,7 +19,7 @@ function scheduleNextTask() {
   const delay = nextRun.getTime() - Date.now();
 
   setTimeout(async () => {
-    console.log('[OpenArva Scheduler] Running daily autonomous background task...');
+    console.log('📅 [OpenArva Scheduler] Running daily autonomous task...');
 
     await agent.executeTask({
       domain: 'agriculture',

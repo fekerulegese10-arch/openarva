@@ -4,8 +4,6 @@ export interface AgentTask {
 }
 export declare class OpenArvaAgent {
     private systemPersona;
-    executeTask(task: AgentTask): Promise<string | {
-        stdout: string;
-        stderr: string;
-    }>;
+    executeTask(task: AgentTask): Promise<string>;
+    private isSuspiciousCommand;
 }

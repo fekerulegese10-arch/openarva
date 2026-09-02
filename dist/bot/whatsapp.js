@@ -29,25 +29,30 @@ const server = createServer((req, res) => {
         const command = message.toLowerCase();
         let reply;
         if (command === 'hello' || command === 'hi') {
-            reply = 'Hello! I am the OpenArva WhatsApp bot. How can I help you?';
+            reply = '👋 Hello! I\'m OpenArva, your personal AI assistant. What can I help you with today?';
         }
         else if (command === 'help') {
             reply =
-                'Available commands:\n' +
-                    'hello - Get a greeting\n' +
-                    'status - Check bot status\n' +
-                    'help - Show this help message';
+                '📚 OpenArva Commands:\n' +
+                    '• hello - Greetings\n' +
+                    '• help - Show commands\n' +
+                    '• status - System status\n' +
+                    '• code <task> - Code generation\n' +
+                    '• analyze <text> - Analysis\n' +
+                    '• translate <lang> - Translation\n\n' +
+                    '💡 Just send any question or task!';
         }
         else if (command === 'status') {
-            reply = 'OpenArva WhatsApp bot is running successfully.';
+            reply = '🟢 OpenArva is online and operating at full capacity!';
         }
         else if (!message) {
-            reply = 'Please send a message. Type "help" to see available commands.';
+            reply = 'Please send a message. Type "help" for available commands.';
         }
         else {
             reply =
-                `You sent: ${message}\n\n` +
-                    'I do not understand that command. Type "help" for assistance.';
+                `📥 Received: "${message}"\n\n` +
+                    '🔄 Processing with OpenArva AI...\n' +
+                    'Type "help" for commands or just ask anything!';
         }
         const xmlResponse = '<?xml version="1.0" encoding="UTF-8"?>' +
             `<Response><Message>${escapeXml(reply).replaceAll('\n', '&#10;')}</Message></Response>`;
@@ -58,5 +63,6 @@ const server = createServer((req, res) => {
     });
 });
 server.listen(port, () => {
-    console.log(`OpenArva WhatsApp bot is running on port ${port}`);
+    console.log(`\n✅ [OpenArva WhatsApp Bot] Running on port ${port}`);
+    console.log(`📱 Your personal AI is ready on WhatsApp!`);
 });

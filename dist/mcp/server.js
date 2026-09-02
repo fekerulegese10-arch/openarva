@@ -4,7 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 export class OpenArvaMCPServer {
     server;
     constructor() {
-        this.server = new Server({ name: 'openarva-mcp-server', version: '15.4.0' }, { capabilities: { tools: {} } });
+        this.server = new Server({ name: 'openarva-mcp-server', version: '17.6.14' }, { capabilities: { tools: {} } });
     }
     async start() {
         const transport = new StdioServerTransport();

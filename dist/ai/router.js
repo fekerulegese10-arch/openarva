@@ -22,21 +22,46 @@ export const OpenArvaRouter = {
     mistral: createOpenAI({ baseURL: 'https://api.mistral.ai/v1', apiKey: process.env.MISTRAL_API_KEY }),
     // Local AI Engine (Llama 3, Qwen 2.5, DeepSeek-R1, Gemma 2, Phi-4)
     local: (modelName) => localEngine(modelName),
-    // Smart Model Selection for Task Execution
+    // Advanced Model Selection for Task Execution with Performance Optimization
     selectModel(taskType) {
+        // Priority: Use most capable model for best results
+        // Fallback: Use faster models for high-volume tasks
         switch (taskType) {
             case 'coding':
             case 'software_engineering':
+                // Best: Groq Llama for fast, accurate code
                 return this.groq('llama-3.3-70b-versatile');
             case 'deep_reasoning':
-            case 'accounting':
+            case 'complex_analysis':
             case 'engineering':
+                // Best: DeepSeek-R1 for advanced reasoning
                 return this.local('deepseek-r1');
+            case 'accounting':
+            case 'financial_analysis':
+                // Best: Claude 3.5 Sonnet for financial accuracy
+                return this.anthropic('claude-3-5-sonnet-20241022');
+            case 'medicine':
+            case 'medical_research':
+                // Best: GPT-4o for medical knowledge
+                return this.openai('gpt-4o');
             case 'multilingual_translation':
-            case 'bureaucracy_documents':
+            case 'language_processing':
+                // Best: Gemini for multilingual support
+                return this.gemini('gemini-2.0-flash');
+            case 'agriculture':
             case 'agriculture_research':
-                return this.gemini('gemini-3.6-flash');
+                // Specialized: Gemini for domain knowledge
+                return this.gemini('gemini-3.1-pro');
+            case 'bureaucracy_documents':
+            case 'documents':
+            case 'legal':
+                // Best: Claude for document precision
+                return this.anthropic('claude-3-5-sonnet-20241022');
+            case 'research':
+                // Best: GPT-4o for research quality
+                return this.openai('gpt-4o');
             default:
+                // Fallback: Most capable general-purpose model
                 return this.openai('gpt-4o');
         }
     }

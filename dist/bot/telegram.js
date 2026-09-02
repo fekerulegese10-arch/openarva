@@ -1,13 +1,14 @@
 export function startBot() {
     const token = process.env.TELEGRAM_BOT_TOKEN;
     if (!token) {
-        console.log('[Telegram] No token provided, skipping Telegram bot.');
+        console.log('⚠️ [Telegram] No token provided, Telegram bot disabled.');
         return;
     }
     const api = `https://api.telegram.org/bot${token}`;
     let offset = 0;
-    console.log('[Telegram] Starting Telegram bot polling loop...');
-    // ቋሚ Polling Loop እንዲኖር while (true) እንጠቀማለን
+    console.log('🤖 [OpenArva Telegram Bot] Starting...');
+    console.log('💬 Listening for messages on Telegram...');
+    // Continuous polling loop
     const poll = async () => {
         while (true) {
             try {
@@ -19,18 +20,20 @@ export function startBot() {
                         const message = update.message;
                         if (!message?.text)
                             continue;
-                        console.log(`[Telegram] New message from ${message.chat.id}: ${message.text}`);
+                        console.log(`📨 [Telegram] Message: "${message.text.substring(0, 50)}..."`);
                         const userMsg = message.text;
                         let reply;
                         if (userMsg.startsWith('/cmd ')) {
                             const command = userMsg.replace('/cmd ', '');
+                            console.log(`⚙️ Executing: ${command}`);
                             const output = await executeCommand(command);
-                            reply = `\`\`\`\n${output}\n\`\`\``;
+                            reply = `✅ Command Output:\n\`\`\`\n${output}\n\`\`\``;
                         }
                         else {
+                            console.log(`🧠 Processing with AI...`);
                             reply = await askOpenArva(userMsg);
                         }
-                        // ለተጠቃሚው በቴሌግራም ምላሽ መላክ
+                        // Send reply to Telegram user
                         await fetch(`${api}/sendMessage`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
