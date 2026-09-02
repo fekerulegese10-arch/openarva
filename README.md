@@ -167,8 +167,8 @@ Before file edits or commands are executed, OpenArva shows a git-style diff prev
 
 - additions are shown in green
 - deletions are shown in red
-- confirmation prompt appears as: `Apply these changes? (y/N)`
-- use `--yes` to skip the prompt when needed
+- confirmation prompt appears as: `Do you approve executing this action? (y/N)`
+- use `--yes` or `--force` to skip the prompt when needed
 
 Example:
 

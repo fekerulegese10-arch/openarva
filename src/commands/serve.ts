@@ -20,7 +20,9 @@ function maybeStartTelegramGateway() {
     await ctx.reply(`OpenArva received: ${text}`);
   });
 
-  bot.start();
+  bot.start().catch((error: unknown) => {
+    console.error(`Telegram Bot Gateway unavailable: ${error instanceof Error ? error.message : 'authentication failed'}`);
+  });
   console.log('Telegram Bot Gateway: active via TELEGRAM_BOT_TOKEN');
 }
 

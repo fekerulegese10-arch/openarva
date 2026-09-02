@@ -111,7 +111,7 @@ async function main() {
       return;
     }
 
-    console.log('Unsupported service action. Use: install, start, status');
+    console.log('Unsupported service action. Use: install, start, run, status');
     return;
   }
 

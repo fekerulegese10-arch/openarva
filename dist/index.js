@@ -94,7 +94,7 @@ async function main() {
             console.log(serviceStatus());
             return;
         }
-        console.log('Unsupported service action. Use: install, start, status');
+        console.log('Unsupported service action. Use: install, start, run, status');
         return;
     }
     if (command === 'status') {

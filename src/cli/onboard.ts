@@ -19,7 +19,7 @@ Commands:
   update          Discover provider models; use --models for local pulls and benchmarks
   mode            Select a specialized design, education, or developer workflow
   tasks           View persistent task and workflow memory
-  service         Manage background service / Windows auto-start
+  service         Manage background service / Windows auto-start (install, start, run, status)
   commit          Prepare a commit message or workflow summary
   serve           Start HTTP/WebSocket gateway and remote mobile bridge
   demo            Run a quick no-key demo mode
