@@ -14,6 +14,7 @@ export class OpenArvaMemory {
   private conversationHistory: Array<{ role: string; content: string; timestamp: string }> = [];
   private userPreferences: Record<string, any> = {};
   private learningMetrics: Record<string, number> = {};
+  private states: Record<string, MemoryEntry> = {};
 
   constructor() {
     this.loadMemory();
@@ -26,6 +27,7 @@ export class OpenArvaMemory {
         this.conversationHistory = data.conversationHistory || [];
         this.userPreferences = data.userPreferences || {};
         this.learningMetrics = data.learningMetrics || {};
+        this.states = data.states || {};
       } catch (e) {
         console.error('[Memory] Failed to load memory, starting fresh');
       }
@@ -78,20 +80,10 @@ export class OpenArvaMemory {
 
   // Enhanced state management with metadata
   saveState(key: string, data: any, importance: number = 5) {
-    let memory: Record<string, MemoryEntry> = {};
-    if (fs.existsSync(this.dbPath)) {
-      try {
-        const raw = JSON.parse(fs.readFileSync(this.dbPath, 'utf-8'));
-        memory = raw.states || {};
-      } catch (e) {
-        // Start fresh if corrupted
-      }
-    }
-    
-    memory[key] = {
+    this.states[key] = {
       data,
       timestamp: new Date().toISOString(),
-      accessCount: (memory[key]?.accessCount || 0) + 1,
+      accessCount: (this.states[key]?.accessCount || 0) + 1,
       lastAccessed: new Date().toISOString(),
       importance
     };
@@ -102,8 +94,7 @@ export class OpenArvaMemory {
   getState(key: string) {
     if (!fs.existsSync(this.dbPath)) return null;
     try {
-      const memory = JSON.parse(fs.readFileSync(this.dbPath, 'utf-8'));
-      const entry = memory.states?.[key];
+      const entry = this.states[key];
       return entry?.data || null;
     } catch (e) {
       return null;
@@ -117,6 +108,7 @@ export class OpenArvaMemory {
         conversationHistory: this.conversationHistory,
         userPreferences: this.userPreferences,
         learningMetrics: this.learningMetrics,
+        states: this.states,
         lastSaved: new Date().toISOString()
       };
       fs.writeFileSync(this.dbPath, JSON.stringify(data, null, 2));

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180" role="img" aria-labelledby="title desc">
+  <title id="title">OpenArva logo</title>
+  <desc id="desc">A modern teal and amber orbital mark beside the OpenArva wordmark</desc>
+  <defs>
+    <linearGradient id="orbit" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16b8a6"/>
+      <stop offset="1" stop-color="#087f8c"/>
+    </linearGradient>
+    <linearGradient id="core" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd166"/>
+      <stop offset="1" stop-color="#f28f3b"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(18 12)">
+    <path d="M78 16c-38 0-68 31-68 70s30 70 68 70c25 0 47-13 59-33" fill="none" stroke="url(#orbit)" stroke-width="14" stroke-linecap="round"/>
+    <path d="M78 16c38 0 68 31 68 70s-30 70-68 70" fill="none" stroke="#113c4a" stroke-width="14" stroke-linecap="round"/>
+    <path d="M78 46c-22 0-40 18-40 40s18 40 40 40c17 0 31-10 37-24" fill="none" stroke="url(#core)" stroke-width="14" stroke-linecap="round"/>
+    <circle cx="78" cy="86" r="11" fill="#113c4a"/>
+    <circle cx="137" cy="47" r="7" fill="#f28f3b"/>
+  </g>
+  <text x="190" y="113" fill="#113c4a" font-family="Trebuchet MS, sans-serif" font-size="72" font-weight="700" letter-spacing="0">openarva</text>
+</svg>

@@ -7,7 +7,7 @@ export class OpenArvaMCPServer {
 
   constructor() {
     this.server = new Server(
-      { name: 'openarva-mcp-server', version: '17.6.14' },
+      { name: 'openarva-mcp-server', version: '17.6.21' },
       { capabilities: { tools: {} } }
     );
   }

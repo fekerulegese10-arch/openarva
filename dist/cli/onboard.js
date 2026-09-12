@@ -22,7 +22,10 @@ Commands:
   commit          Prepare a commit message or workflow summary
   serve           Start HTTP/WebSocket gateway and remote mobile bridge
   demo            Run a quick no-key demo mode
-  gateway         Show gateway status
+  start           Start the background task daemon
+  daemon          Run the task daemon in the foreground
+  gateway         Manage gateway (start, stop, status)
+  dashboard       Start gateway and open the local dashboard
   help            Show this help message
 
 Examples:
@@ -37,13 +40,17 @@ Examples:
   openarva mode design "Create a dashboard wireframe"
   openarva mode edu "Build a lesson plan"
   openarva mode dev "Scan this API for vulnerabilities"
+  openarva start
   openarva tasks
   openarva service install
   openarva commit "feat: improve AI workflow"
   openarva serve --port 3000
   openarva fix "Resolve TypeScript errors"
   openarva run --domain coding --instruction "Build a simple API"
-  openarva gateway
+  openarva gateway start
+  openarva gateway stop
+  openarva gateway status
+  openarva dashboard
 
 Supported providers:
   openai, anthropic, gemini, groq, deepseek, ollama, local, lmstudio

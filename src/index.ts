@@ -11,6 +11,10 @@ import { renderTaskTable } from './commands/state.js';
 import { runModelUpdate } from './commands/update.js';
 import { getModeInstruction, renderMode, resolveMode } from './commands/modes.js';
 import { installService, runService, serviceStatus, startService } from './commands/service.js';
+import { gatewayStatus, openDashboard, startGateway, stopGateway } from './commands/gateway.js';
+import { runDaemon } from './commands/daemon.js';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 
 const agent = new OpenArvaAgent();
@@ -35,6 +39,23 @@ async function main() {
   if (command === 'demo') {
     console.log(chalk.green('Demo mode enabled. No API key required for an instant trial.'));
     console.log(chalk.yellow('OpenArva preview: "AI agent ready for coding, research, and automation tasks."'));
+    return;
+  }
+
+  if (command === 'start') {
+    const entry = fileURLToPath(new URL('./index.js', import.meta.url));
+    const child = spawn(process.execPath, [entry, 'daemon'], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true,
+    });
+    child.unref();
+    console.log(`OpenArva daemon started${child.pid ? ` (PID ${child.pid})` : ''}.`);
+    return;
+  }
+
+  if (command === 'daemon') {
+    await runDaemon();
     return;
   }
 
@@ -182,16 +203,23 @@ async function main() {
   }
 
   if (command === 'gateway') {
-    console.log('🚀 [OpenArva Personal AI] Gateway is active and ready');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🌐 WebSocket: ws://127.0.0.1:18789');
-    console.log('📱 Connectors: Telegram • WhatsApp • Discord • Web • CLI • SMS');
-    console.log('🧠 Memory System: Active & Learning');
-    console.log('⚡ Model Router: Optimized for quality & speed');
-    console.log('🔒 Security: Sandboxed execution with validation');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('Status: ✅ Ready to serve your autonomous needs');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    const action = args[1] || 'start';
+    const portIndex = args.findIndex((arg) => arg === '--port' || arg === '-p');
+    const port = portIndex >= 0 ? Number(args[portIndex + 1] || 3000) : Number(process.env.OPENARVA_PORT || 3000);
+    if (action === 'stop') console.log(stopGateway());
+    else if (action === 'status') console.log(gatewayStatus());
+    else if (action === 'start') console.log(startGateway(port));
+    else {
+      console.error('Usage: openarva gateway [start|stop|status] [--port 3000]');
+      process.exitCode = 1;
+    }
+    return;
+  }
+
+  if (command === 'dashboard') {
+    const port = Number(process.env.OPENARVA_PORT || 3000);
+    console.log(startGateway(port));
+    console.log(openDashboard(port));
     return;
   }
 

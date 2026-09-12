@@ -3,6 +3,7 @@ export declare class OpenArvaMemory {
     private conversationHistory;
     private userPreferences;
     private learningMetrics;
+    private states;
     constructor();
     private loadMemory;
     saveConversation(role: 'user' | 'assistant', content: string): void;

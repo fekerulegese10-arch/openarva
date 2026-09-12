@@ -13,6 +13,10 @@ export interface OpenArvaTask {
   updatedAt: string;
   userId?: string;
   metadata?: Record<string, string>;
+  attempts?: number;
+  lastError?: string;
+  claimedBy?: string;
+  claimedAt?: string;
 }
 
 export interface OpenArvaState {
@@ -82,6 +86,61 @@ export function updateTaskStatus(taskId: string, status: OpenArvaTask['status'])
 
   task.status = status;
   task.updatedAt = new Date().toISOString();
+  if (status !== 'in_progress') {
+    task.claimedBy = undefined;
+    task.claimedAt = undefined;
+  }
+  saveState(state);
+  return task;
+}
+
+export function recoverStaleTasks(staleAfterMs = 15 * 60 * 1000) {
+  const state = loadState();
+  const cutoff = Date.now() - staleAfterMs;
+  let recovered = 0;
+  for (const task of state.tasks) {
+    if (task.status !== 'in_progress') continue;
+    const claimedAt = task.claimedAt ? Date.parse(task.claimedAt) : Date.parse(task.updatedAt);
+    if (!Number.isFinite(claimedAt) || claimedAt > cutoff) continue;
+    task.status = 'pending';
+    task.updatedAt = new Date().toISOString();
+    task.claimedBy = undefined;
+    task.claimedAt = undefined;
+    task.lastError = 'Recovered after an interrupted worker run.';
+    recovered += 1;
+  }
+  if (recovered) saveState(state);
+  return recovered;
+}
+
+export function claimNextTask(workerId: string) {
+  const state = loadState();
+  const task = state.tasks.find((item) => item.status === 'pending');
+  if (!task) return null;
+
+  const now = new Date().toISOString();
+  task.status = 'in_progress';
+  task.updatedAt = now;
+  task.claimedAt = now;
+  task.claimedBy = workerId;
+  task.attempts = (task.attempts || 0) + 1;
+  saveState(state);
+  return task;
+}
+
+export function markTaskCompleted(taskId: string) {
+  return updateTaskStatus(taskId, 'completed');
+}
+
+export function markTaskFailed(taskId: string, error: string) {
+  const state = loadState();
+  const task = state.tasks.find((item) => item.id === taskId);
+  if (!task) return null;
+  task.status = 'failed';
+  task.lastError = error.slice(-4000);
+  task.updatedAt = new Date().toISOString();
+  task.claimedBy = undefined;
+  task.claimedAt = undefined;
   saveState(state);
   return task;
 }

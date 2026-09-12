@@ -1,7 +1,20 @@
-# OpenArva
+<p align="center">
+  <img src="https://unpkg.com/openarva@latest/assets/openarva-logo.svg" alt="OpenArva logo" width="180" />
+</p>
+
+<h1 align="center">OpenArva</h1>
+
+Personal AI agent for coding, automation, research, and remote workflows.
+
+```bash
+npm install -g openarva
+openarva init
+```
+
+OpenArva runs from the terminal on Windows, Linux, macOS, and Android/Termux.
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v17.6.14-blue" alt="OpenArva version 17.6.14" />
+  <img src="https://img.shields.io/badge/version-v17.6.21-blue" alt="OpenArva version 17.6.21" />
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS%20%7C%20Android-lightgrey" alt="Cross-platform support" />
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license" />
 </p>
@@ -267,7 +280,7 @@ Use OpenArva directly from the terminal or add tasks in `.vscode/tasks.json`.
 
 The package is configured for CLI installation with a Node entrypoint.
 
-- version: `17.6.14`
+- version: `17.6.22`
 - bin: `openarva -> ./bin/openarva.js`
 - entrypoint expects the compiled TypeScript output in `dist/`
 
@@ -303,8 +316,6 @@ Support openarva development and help fund private, secure, enterprise-grade AI 
 * USDT (TRC20): `TNfDCVCZ11PTrQRTXzoAPhQPBuQetf1MSQ`
 * CBE Account: `1000706450622` (Fekru Negese)
 * Visa Card: `4410290147318359`
-
----
 
 ## Issues and Feedback
 

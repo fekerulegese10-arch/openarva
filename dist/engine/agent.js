@@ -1,10 +1,9 @@
 import { OpenArvaRouter } from '../ai/router.js';
 import { routeAiCompletion } from '../ai/providers.js';
-import { exec } from 'node:child_process';
-import { promisify } from 'node:util';
 import chalk from 'chalk';
 import { addTask, confirmExecutionApproval, updateTaskStatus } from '../commands/state.js';
-const execAsync = promisify(exec);
+import { OpenArvaMemory } from '../db/memory.js';
+import { parseSafeCommand, runSandboxedCommandDetailed, validateSafeCommand } from './sandbox.js';
 function renderDiffPreview(before, after) {
     const beforeLines = before.split(/\r?\n/);
     const afterLines = after.split(/\r?\n/);
@@ -30,8 +29,9 @@ function renderDiffPreview(before, after) {
     }
 }
 export class OpenArvaAgent {
+    memory = new OpenArvaMemory();
     systemPersona = `
-    You are OpenArva — Your Personal Autonomous AI Assistant (v17.6.14)
+    You are OpenArva — Your Personal Autonomous AI Assistant (v17.6.21)
     
     CORE CAPABILITIES:
     ✓ Autonomous Task Execution - Full-stack development, debugging, refactoring
@@ -76,13 +76,42 @@ export class OpenArvaAgent {
                     updateTaskStatus(taskRecord.id, 'failed');
                     return 'Execution cancelled by user.';
                 }
-                console.log(`[Executor] Running command: ${cmd}`);
-                const result = await execAsync(cmd);
+                console.log(`[Executor] Running sandboxed command: ${cmd}`);
+                const parsed = parseSafeCommand(cmd);
+                const outputResult = await runSandboxedCommandDetailed(parsed.command, parsed.args, process.cwd(), 120_000, async (failure) => {
+                    try {
+                        const repairPrompt = `A command failed while operating the user's project. Return ONLY JSON with keys command and args, or {} if no safe repair is possible. Do not use shell operators.\nCommand: ${parsed.command} ${parsed.args.join(' ')}\nExit code: ${failure.exitCode}\nStderr:\n${failure.stderr.slice(-6000)}`;
+                        const suggestion = await routeAiCompletion(repairPrompt);
+                        const json = suggestion.match(/\{[\s\S]*\}/)?.[0];
+                        if (!json)
+                            return;
+                        const repaired = JSON.parse(json);
+                        if (typeof repaired.command !== 'string' || !Array.isArray(repaired.args) || !repaired.args.every((item) => typeof item === 'string'))
+                            return;
+                        validateSafeCommand(repaired.command, repaired.args);
+                        return { command: repaired.command, args: repaired.args };
+                    }
+                    catch {
+                        return;
+                    }
+                });
+                if (!outputResult.ok)
+                    throw new Error(`Command failed after ${outputResult.attempts} attempt(s): ${outputResult.stderr || outputResult.stdout}`);
+                const output = outputResult.stdout || outputResult.stderr;
                 updateTaskStatus(taskRecord.id, 'completed');
-                return `✅ Command executed successfully:\n${result.stdout || result}`;
+                return `✅ Command executed successfully:\n${output}`;
             }
             const timestamp = new Date().toISOString();
-            const aiResult = await routeAiCompletion(task.instruction);
+            const recentContext = this.memory.getRecentContext(8);
+            const personalizedPrompt = [
+                this.systemPersona.trim(),
+                recentContext ? `[RECENT CONVERSATION]\n${recentContext}\n[/RECENT CONVERSATION]` : '',
+                `[CURRENT TASK]\nDomain: ${task.domain}\nRequest: ${task.instruction}\n[/CURRENT TASK]`,
+                'Respond directly with a practical answer. Be transparent about what you can and cannot do.',
+            ].filter(Boolean).join('\n\n');
+            this.memory.saveConversation('user', task.instruction);
+            const aiResult = await routeAiCompletion(personalizedPrompt);
+            this.memory.saveConversation('assistant', aiResult);
             renderDiffPreview('', aiResult);
             const approved = await confirmExecutionApproval(`execute task in ${task.domain}`);
             if (!approved) {
@@ -112,6 +141,19 @@ Suggestion: Please verify your input and try again.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       `;
         }
+    }
+    async respond(prompt, domain = 'coding') {
+        const recentContext = this.memory.getRecentContext(8);
+        const personalizedPrompt = [
+            this.systemPersona.trim(),
+            recentContext ? `[RECENT CONVERSATION]\n${recentContext}\n[/RECENT CONVERSATION]` : '',
+            `[CURRENT TASK]\nDomain: ${domain}\nRequest: ${prompt}\n[/CURRENT TASK]`,
+            'Respond directly with a practical answer. Do not claim that files or commands were changed unless a tool actually performed that action.',
+        ].filter(Boolean).join('\n\n');
+        this.memory.saveConversation('user', prompt);
+        const response = await routeAiCompletion(personalizedPrompt);
+        this.memory.saveConversation('assistant', response);
+        return response;
     }
     isSuspiciousCommand(cmd) {
         const dangerousPatterns = [

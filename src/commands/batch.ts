@@ -30,7 +30,7 @@ export async function runBatchProcessor(targetDir: string, templateName?: string
     }
 
     const ext = extname(item.name).toLowerCase();
-    if (!['.txt', '.md', '.csv', '.json', '.pdf', '.xlsx'].includes(ext)) {
+    if (!['.txt', '.md', '.csv', '.json'].includes(ext)) {
       continue;
     }
 

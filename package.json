@@ -1,17 +1,22 @@
 {
   "name": "openarva",
-  "version": "17.6.14",
+  "version": "17.6.22",
   "description": "Enterprise Autonomous Multi-Model AI Agent Gateway Engine",
   "license": "MIT",
   "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fekerulegese10-arch/openarva.git"
+  },
   "type": "module",
   "bin": {
-    "openarva": "./bin/openarva.js"
+    "openarva": "bin/openarva.js"
   },
   "files": [
     "dist",
     "bin",
-    "README.md"
+    "README.md",
+    "assets"
   ],
   "scripts": {
     "build": "tsc",
