@@ -15,7 +15,11 @@ import { gatewayStatus, openDashboard, startGateway, stopGateway } from './comma
 import { runDaemon } from './commands/daemon.js';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { runMultiChannelGateway } from './connectors/gateway.js';
+import { crawlGitHub } from './crawlers/gitcrawl.js';
+import { crawlTelegram } from './crawlers/telecrawl.js';
 import chalk from 'chalk';
+import { renderSponsorChannels } from './cli/sponsor.js';
 
 const agent = new OpenArvaAgent();
 
@@ -39,6 +43,11 @@ async function main() {
   if (command === 'demo') {
     console.log(chalk.green('Demo mode enabled. No API key required for an instant trial.'));
     console.log(chalk.yellow('OpenArva preview: "AI agent ready for coding, research, and automation tasks."'));
+    return;
+  }
+
+  if (command === 'sponsor') {
+    renderSponsorChannels();
     return;
   }
 
@@ -165,6 +174,25 @@ async function main() {
     return;
   }
 
+  if (command === 'crawl') {
+    const source = args[1];
+    if (source === 'git') {
+      const repository = args[2];
+      if (!repository) throw new Error('Usage: openarva crawl git owner/repository');
+      console.log(JSON.stringify(await crawlGitHub({ repository, token: process.env.GITHUB_TOKEN }), null, 2));
+      return;
+    }
+    if (source === 'telegram') {
+      const fileIndex = args.findIndex((arg) => arg === '--file' || arg === '-f');
+      const file = fileIndex >= 0 ? args[fileIndex + 1] : undefined;
+      console.log(JSON.stringify(await crawlTelegram({ file, token: process.env.TELEGRAM_BOT_TOKEN }), null, 2));
+      return;
+    }
+    console.error('Usage: openarva crawl git owner/repository | openarva crawl telegram --file export.json');
+    process.exitCode = 1;
+    return;
+  }
+
   if (command === 'fix') {
     const taskText = args.slice(1).join(' ') || 'Fix the current repository issues and validate the project with TypeScript checks.';
     const result = await runFixCommand(taskText);
@@ -209,8 +237,11 @@ async function main() {
     if (action === 'stop') console.log(stopGateway());
     else if (action === 'status') console.log(gatewayStatus());
     else if (action === 'start') console.log(startGateway(port));
+    else if (action === 'daemon') {
+      await runMultiChannelGateway({ port });
+    }
     else {
-      console.error('Usage: openarva gateway [start|stop|status] [--port 3000]');
+      console.error('Usage: openarva gateway [start|stop|status|daemon] [--port 3000]');
       process.exitCode = 1;
     }
     return;

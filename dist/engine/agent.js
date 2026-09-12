@@ -4,6 +4,9 @@ import chalk from 'chalk';
 import { addTask, confirmExecutionApproval, updateTaskStatus } from '../commands/state.js';
 import { OpenArvaMemory } from '../db/memory.js';
 import { parseSafeCommand, runSandboxedCommandDetailed, validateSafeCommand } from './sandbox.js';
+import { executeSystemCommand, getSystemStatus, inspectProcesses, takeScreenshot } from '../tools/system.js';
+import { editWorkspaceFile, executeWorkspaceCommand, searchWorkspace } from '../tools/workspace.js';
+import { indexMemoryDocument, searchMemory } from '../memory/vectorStore.js';
 function renderDiffPreview(before, after) {
     const beforeLines = before.split(/\r?\n/);
     const afterLines = after.split(/\r?\n/);
@@ -64,6 +67,12 @@ export class OpenArvaAgent {
         const selectedProvider = OpenArvaRouter.selectModel(task.domain);
         console.log(`[Router] Selected: ${selectedProvider}`);
         try {
+            if (task.instruction.startsWith('TOOL:')) {
+                const call = JSON.parse(task.instruction.slice('TOOL:'.length).trim());
+                const result = await this.executeNativeTool(call.name, call.input || {});
+                updateTaskStatus(taskRecord.id, 'completed');
+                return JSON.stringify(result, null, 2);
+            }
             if (task.instruction.startsWith('EXEC_CMD:')) {
                 const cmd = task.instruction.replace('EXEC_CMD:', '').trim();
                 if (this.isSuspiciousCommand(cmd)) {
@@ -142,17 +151,32 @@ Suggestion: Please verify your input and try again.
       `;
         }
     }
+    async executeNativeTool(name, input) {
+        switch (name) {
+            case 'system.status': return getSystemStatus();
+            case 'system.processes': return inspectProcesses();
+            case 'system.screenshot': return takeScreenshot(String(input.outputPath || 'openarva-screenshot.png'));
+            case 'system.exec': return executeSystemCommand(String(input.command || ''), String(input.cwd || process.cwd()), Boolean(input.autoApprove));
+            case 'workspace.search': return searchWorkspace(String(input.query || ''), String(input.cwd || process.cwd()));
+            case 'workspace.edit': return editWorkspaceFile(String(input.path || ''), String(input.content || ''), String(input.cwd || process.cwd()), Boolean(input.autoApprove));
+            case 'workspace.exec': return executeWorkspaceCommand(String(input.command || ''), String(input.cwd || process.cwd()), Boolean(input.autoApprove));
+            default: throw new Error(`Unknown native tool: ${String(name)}`);
+        }
+    }
     async respond(prompt, domain = 'coding') {
         const recentContext = this.memory.getRecentContext(8);
+        const retrieved = searchMemory(prompt, 5).filter((item) => item.score > 0).map((item) => `[${item.source}] ${item.text}`).join('\n');
         const personalizedPrompt = [
             this.systemPersona.trim(),
             recentContext ? `[RECENT CONVERSATION]\n${recentContext}\n[/RECENT CONVERSATION]` : '',
+            retrieved ? `[RETRIEVED LOCAL MEMORY]\n${retrieved}\n[/RETRIEVED LOCAL MEMORY]` : '',
             `[CURRENT TASK]\nDomain: ${domain}\nRequest: ${prompt}\n[/CURRENT TASK]`,
             'Respond directly with a practical answer. Do not claim that files or commands were changed unless a tool actually performed that action.',
         ].filter(Boolean).join('\n\n');
         this.memory.saveConversation('user', prompt);
         const response = await routeAiCompletion(personalizedPrompt);
         this.memory.saveConversation('assistant', response);
+        indexMemoryDocument({ id: `chat:${Date.now()}`, source: 'chat', text: `${prompt}\n${response}`, metadata: { domain } });
         return response;
     }
     isSuspiciousCommand(cmd) {

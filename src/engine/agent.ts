@@ -5,6 +5,11 @@ import { addTask, confirmExecutionApproval, updateTaskStatus } from '../commands
 import { OpenArvaMemory } from '../db/memory.js';
 import { parseSafeCommand, runSandboxedCommandDetailed, validateSafeCommand } from './sandbox.js';
 import type { TerminalAttempt } from './executor.js';
+import { executeSystemCommand, getSystemStatus, inspectProcesses, takeScreenshot } from '../tools/system.js';
+import { editWorkspaceFile, executeWorkspaceCommand, searchWorkspace } from '../tools/workspace.js';
+import { indexMemoryDocument, searchMemory } from '../memory/vectorStore.js';
+
+export type NativeToolName = 'system.status' | 'system.processes' | 'system.screenshot' | 'system.exec' | 'workspace.search' | 'workspace.edit' | 'workspace.exec';
 
 function renderDiffPreview(before: string, after: string) {
   const beforeLines = before.split(/\r?\n/);
@@ -78,6 +83,13 @@ export class OpenArvaAgent {
     console.log(`[Router] Selected: ${selectedProvider}`);
 
     try {
+      if (task.instruction.startsWith('TOOL:')) {
+        const call = JSON.parse(task.instruction.slice('TOOL:'.length).trim()) as { name?: NativeToolName; input?: Record<string, unknown> };
+        const result = await this.executeNativeTool(call.name, call.input || {});
+        updateTaskStatus(taskRecord.id, 'completed');
+        return JSON.stringify(result, null, 2);
+      }
+
       if (task.instruction.startsWith('EXEC_CMD:')) {
         const cmd = task.instruction.replace('EXEC_CMD:', '').trim();
 
@@ -157,11 +169,26 @@ Suggestion: Please verify your input and try again.
     }
   }
 
+  async executeNativeTool(name: NativeToolName | undefined, input: Record<string, unknown>) {
+    switch (name) {
+      case 'system.status': return getSystemStatus();
+      case 'system.processes': return inspectProcesses();
+      case 'system.screenshot': return takeScreenshot(String(input.outputPath || 'openarva-screenshot.png'));
+      case 'system.exec': return executeSystemCommand(String(input.command || ''), String(input.cwd || process.cwd()), Boolean(input.autoApprove));
+      case 'workspace.search': return searchWorkspace(String(input.query || ''), String(input.cwd || process.cwd()));
+      case 'workspace.edit': return editWorkspaceFile(String(input.path || ''), String(input.content || ''), String(input.cwd || process.cwd()), Boolean(input.autoApprove));
+      case 'workspace.exec': return executeWorkspaceCommand(String(input.command || ''), String(input.cwd || process.cwd()), Boolean(input.autoApprove));
+      default: throw new Error(`Unknown native tool: ${String(name)}`);
+    }
+  }
+
   async respond(prompt: string, domain: AgentTask['domain'] = 'coding') {
     const recentContext = this.memory.getRecentContext(8);
+    const retrieved = searchMemory(prompt, 5).filter((item) => item.score > 0).map((item) => `[${item.source}] ${item.text}`).join('\n');
     const personalizedPrompt = [
       this.systemPersona.trim(),
       recentContext ? `[RECENT CONVERSATION]\n${recentContext}\n[/RECENT CONVERSATION]` : '',
+      retrieved ? `[RETRIEVED LOCAL MEMORY]\n${retrieved}\n[/RETRIEVED LOCAL MEMORY]` : '',
       `[CURRENT TASK]\nDomain: ${domain}\nRequest: ${prompt}\n[/CURRENT TASK]`,
       'Respond directly with a practical answer. Do not claim that files or commands were changed unless a tool actually performed that action.',
     ].filter(Boolean).join('\n\n');
@@ -169,6 +196,7 @@ Suggestion: Please verify your input and try again.
     this.memory.saveConversation('user', prompt);
     const response = await routeAiCompletion(personalizedPrompt);
     this.memory.saveConversation('assistant', response);
+    indexMemoryDocument({ id: `chat:${Date.now()}`, source: 'chat', text: `${prompt}\n${response}`, metadata: { domain } });
     return response;
   }
 

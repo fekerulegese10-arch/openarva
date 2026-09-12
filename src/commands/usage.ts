@@ -131,10 +131,7 @@ export function renderUsageDashboard() {
   });
 
   console.log('');
-  console.log('Billing / Payment Routing');
-  console.log('  USDT (TRC20): TNfDCVCZ11PTrQRTXzoAPhQPBuQetf1MSQ');
-  console.log('  CBE Account: 1000706450622 (Fekeru Negese)');
-  console.log('  Visa Card: 4410290147318359');
+  console.log('Sponsorship: run `openarva sponsor` for public donation channels.');
 }
 
 function createPdfReport(reportText: string) {
@@ -158,11 +155,7 @@ export function exportUsageReport(format: 'json' | 'pdf') {
     totalTokens: events.reduce((sum, e) => sum + e.totalTokens, 0),
     totalCost: events.reduce((sum, e) => sum + (e.estimatedCost || 0), 0),
     events,
-    paymentRouting: {
-      usdt: 'TNfDCVCZ11PTrQRTXzoAPhQPBuQetf1MSQ',
-      cbe: '1000706450622',
-      visa: '4410290147318359',
-    },
+    sponsorship: 'Run openarva sponsor for public donation channels.',
   };
 
   if (format === 'json') {
@@ -173,6 +166,6 @@ export function exportUsageReport(format: 'json' | 'pdf') {
   }
 
   const pdfPath = join(homedir(), '.openarva', 'usage-report.pdf');
-  writeFileSync(pdfPath, createPdfReport(`OpenArva Usage Report\nOrganization: ${report.organizationName}\nDeveloper: ${report.developerId}\nGenerated At: ${report.generatedAt}\nTotal Tokens: ${report.totalTokens}\nEstimated Cost: $${report.totalCost.toFixed(4)}\n\nPayment routing:\nUSDT: TNfDCVCZ11PTrQRTXzoAPhQPBuQetf1MSQ\nCBE: 1000706450622\nVisa: 4410290147318359`), 'utf8');
+  writeFileSync(pdfPath, createPdfReport(`OpenArva Usage Report\nOrganization: ${report.organizationName}\nDeveloper: ${report.developerId}\nGenerated At: ${report.generatedAt}\nTotal Tokens: ${report.totalTokens}\nEstimated Cost: $${report.totalCost.toFixed(4)}\n\nSponsorship: run openarva sponsor for public donation channels.`), 'utf8');
   console.log(`PDF usage report saved to ${pdfPath}`);
 }

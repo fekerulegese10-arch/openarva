@@ -15,6 +15,13 @@ export interface OpenArvaJsonConfig {
     baseUrl?: string;
     organizationName?: string;
     developerId?: string;
+    localAi?: {
+        enabled?: boolean;
+        baseUrl?: string;
+        model?: string;
+    };
+    telegramBotToken?: string;
+    repositoryPaths?: string[];
     privacy?: OpenArvaPrivacyConfig;
 }
 export declare function normalizeProvider(provider?: string): "openai" | "anthropic" | "gemini" | "groq" | "deepseek" | "ollama" | "local" | "lmstudio";

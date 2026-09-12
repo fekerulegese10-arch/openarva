@@ -14,6 +14,7 @@ Commands:
   fix             Diagnose and repair repository issues safely
   status          Show provider, model, port, and bridge status
   batch           Bulk-process text/document files in a directory
+  crawl           Index GitHub repositories or Telegram exports locally
   learn           Index local docs/context into the on-device memory bank
   usage           Show usage dashboard and export billing statements
   update          Discover provider models; use --models for local pulls and benchmarks
@@ -23,9 +24,10 @@ Commands:
   commit          Prepare a commit message or workflow summary
   serve           Start HTTP/WebSocket gateway and remote mobile bridge
   demo            Run a quick no-key demo mode
+  sponsor         Show public sponsorship and donation channels
   start           Start the background task daemon
   daemon          Run the task daemon in the foreground
-  gateway         Manage gateway (start, stop, status)
+  gateway         Manage multi-channel gateway (start, stop, status, daemon)
   dashboard       Start gateway and open the local dashboard
   help            Show this help message
 
@@ -34,6 +36,8 @@ Examples:
   openarva doctor
   openarva status
   openarva batch --dir ./documents
+  openarva crawl git owner/repository
+  openarva crawl telegram --file ./telegram-export.json
   openarva learn --index ./
   openarva learn --forget
   openarva usage
@@ -42,6 +46,7 @@ Examples:
   openarva mode edu "Build a lesson plan"
   openarva mode dev "Scan this API for vulnerabilities"
   openarva start
+  openarva sponsor
   openarva tasks
   openarva service install
   openarva commit "feat: improve AI workflow"
@@ -51,6 +56,7 @@ Examples:
   openarva gateway start
   openarva gateway stop
   openarva gateway status
+  openarva gateway daemon
   openarva dashboard
 
 Supported providers:
@@ -134,6 +140,42 @@ export async function runOnboarding() {
     defaultValue: '',
   });
 
+  const localAiEnabled = await select({
+    message: 'Configure a local LLM endpoint now?',
+    options: [
+      { value: 'yes', label: 'Yes - Ollama, LM Studio, or another local endpoint' },
+      { value: 'no', label: 'No - configure it later' },
+    ],
+    initialValue: selectedProvider === 'ollama' || selectedProvider === 'local' || selectedProvider === 'lmstudio' ? 'yes' : 'no',
+  });
+
+  let localAi: { enabled?: boolean; baseUrl?: string; model?: string } | undefined;
+  if (localAiEnabled === 'yes') {
+    const localUrl = await text({
+      message: 'Local LLM base URL',
+      placeholder: 'http://127.0.0.1:11434/v1',
+      defaultValue: selectedProvider === 'lmstudio' ? 'http://127.0.0.1:1234/v1' : 'http://127.0.0.1:11434/v1',
+    });
+    const localModel = await text({
+      message: 'Local LLM model name',
+      placeholder: 'llama3.1',
+      defaultValue: model || 'llama3.1',
+    });
+    localAi = { enabled: true, baseUrl: String(localUrl), model: String(localModel) };
+  }
+
+  const telegramToken = await text({
+    message: 'Telegram bot token (optional; leave blank to skip)',
+    placeholder: '123456:token-from-BotFather',
+    defaultValue: '',
+  });
+
+  const repositoryPaths = await text({
+    message: 'Repository paths to index later (optional, comma-separated)',
+    placeholder: 'C:/projects/app, ./workspace',
+    defaultValue: '',
+  });
+
   const config = {
     provider: selectedProvider,
     model: model,
@@ -141,6 +183,11 @@ export async function runOnboarding() {
     baseUrl: baseUrl || undefined,
     organizationName: typeof organizationName === 'string' ? organizationName : String(organizationName || ''),
     developerId: typeof developerId === 'string' ? developerId : String(developerId || ''),
+    localAi,
+    telegramBotToken: typeof telegramToken === 'string' && telegramToken ? telegramToken : undefined,
+    repositoryPaths: typeof repositoryPaths === 'string' && repositoryPaths.trim()
+      ? repositoryPaths.split(',').map((item) => item.trim()).filter(Boolean)
+      : [],
   };
 
   saveOpenArvaConfig(config);

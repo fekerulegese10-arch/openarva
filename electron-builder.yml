@@ -1,0 +1,20 @@
+appId: com.openarva.desktop
+productName: OpenArva
+directories:
+  output: release
+files:
+  - dist/**
+  - desktop/**
+  - bin/**
+  - assets/**
+  - package.json
+win:
+  target:
+    - nsis
+  artifactName: openarva-${version}-win-${arch}.${ext}
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Utility
+  artifactName: openarva-${version}-linux-${arch}.${ext}

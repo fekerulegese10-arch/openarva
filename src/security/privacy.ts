@@ -2,6 +2,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { loadOpenArvaConfig } from '../config/env.js';
+import { sanitizeSensitiveData } from './sanitizer.js';
 
 export function getOpenArvaHomeDir() {
   const dir = join(homedir(), '.openarva');
@@ -46,7 +47,7 @@ export function redactPii(input: string): string {
     [/\b[A-Z]{2,}\d{6,}\b/g, '[REDACTED_ID]'],
   ];
 
-  let redacted = input;
+  let redacted = sanitizeSensitiveData(input).text;
   for (const [pattern, replacement] of patterns) {
     redacted = redacted.replace(pattern, replacement as string);
   }

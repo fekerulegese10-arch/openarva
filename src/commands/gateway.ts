@@ -41,7 +41,7 @@ export function startGateway(port = Number(process.env.OPENARVA_PORT || 3000)) {
   if (current && isRunning(current.pid)) return gatewayStatus();
 
   mkdirSync(join(homedir(), '.openarva'), { recursive: true });
-  const child = spawn(process.execPath, [process.argv[1], 'serve', '--port', String(port)], {
+  const child = spawn(process.execPath, [process.argv[1], 'gateway', 'daemon', '--port', String(port)], {
     detached: true,
     stdio: 'ignore',
     windowsHide: true,

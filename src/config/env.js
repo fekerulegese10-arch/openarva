@@ -1,4 +1,7 @@
 import dotenv from 'dotenv';
+import { existsSync, readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 
 dotenv.config();
 
@@ -64,6 +67,20 @@ export function getProviderConfig(provider = process.env.OPENARVA_PROVIDER || 'o
     baseUrl: process.env[`${resolvedProvider.toUpperCase()}_BASE_URL`] || defaultBaseUrls[resolvedProvider] || '',
     defaultModels: providerModelDefaults[resolvedProvider] || [],
   };
+}
+
+export function getOpenArvaConfigPath() {
+  return join(homedir(), '.openarva', 'config.json');
+}
+
+export function loadOpenArvaConfig() {
+  const configPath = getOpenArvaConfigPath();
+  if (!existsSync(configPath)) return {};
+  try {
+    return JSON.parse(readFileSync(configPath, 'utf8'));
+  } catch {
+    return {};
+  }
 }
 
 export const config = {
